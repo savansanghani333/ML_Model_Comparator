@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>📊 Analysis Results - ML Dashboard</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7fc;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            margin: 0;
+            padding: 30px;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+            max-width: 1000px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        h2, h3, h4 {
+            text-align: center;
+            color: #007bff;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+        }
+        td {
+            padding: 8px;
+        }
+        canvas {
+            width: 100%;
+            height: 250px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        a {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            text-decoration: none;
+            margin-top: 20px;
+        }
+        a:hover {
+            background-color: #218838;
+        }
+        .highlight {
+            background-color: #e6ffed;
+            border: 1px solid #28a745;
+            color: #155724;
+            padding: 10px;
+            margin: 15px 0;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <h2>📊 Machine Learning Analysis Results</h2>
+
+    <h3>📦 Dataset Information</h3>
+    <table>
+        <tr><td><strong>Rows</strong></td><td>{{ dataset_info['shape'][0] }}</td></tr>
+        <tr><td><strong>Columns</strong></td><td>{{ dataset_info['shape'][1] }}</td></tr>
+    </table>
+
+    <!-- Best Model Recommendation Section -->
+    {% set best_model = results | max(attribute='accuracy') %}
+    <div class="highlight">
+        ✅ Recommended Model: <strong>{{ best_model['model'] }}</strong> with Accuracy: <strong>{{ best_model['accuracy'] }}%</strong>
+    </div>
+
+    <div class="grid">
+        <div>
+            <h3>🏅 Model Performance</h3>
+            <table>
+                <tr><th>Model</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1 Score</th></tr>
+                {% for result in results %}
+                <tr>
+                    <td>{{ result['model'] }}</td>
+                    <td>{{ result['accuracy'] }}%</td>
+                    <td>{{ result['precision'] }}%</td>
+                    <td>{{ result['recall'] }}%</td>
+                    <td>{{ result['f1_score'] }}%</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div>
+            <h3>📊 Accuracy Chart</h3>
+            <canvas id="accuracyChart"></canvas>
+        </div>
+    </div>
+
+    <h3>💡 Feature Importance (Tree Models)</h3>
+    {% if feature_importance %}
+        {% for model, importances in feature_importance.items() %}
+            <h4>{{ model }}</h4>
+            <table>
+                <tr><th>Feature</th><th>Importance</th></tr>
+                {% for i, importance in enumerate(importances) %}
+                <tr>
+                    <td>{{ feature_names[i] }}</td>
+                    <td>{{ "%.4f"|format(importance) }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        {% endfor %}
+    {% else %}
+        <p style="text-align: center;">No feature importance available for non-tree models.</p>
+    {% endif %}
+
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="/">⬅️ Upload Another File</a>
+    </div>
+</div>
+
+<script>
+    const chartData = {{ chart_data | tojson | safe }};
+    new Chart(document.getElementById('accuracyChart'), {
+        type: 'bar',
+        data: {
+            labels: chartData.models,
+            datasets: [{
+                label: 'Accuracy (%)',
+                data: chartData.accuracies,
+                backgroundColor: '#007bff'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true, max: 100 }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
